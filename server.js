@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const mongodb = require('mongodb');
 const dns = require('dns');
 const { response } = require('express');
+const { request } = require('http');
 const DB_URI = process.env.MONGO_URI;
 
 
@@ -30,22 +31,83 @@ app.get('/', (req, res) => {
 });
 
 
-/* Create URL Model */
-let userNameSchema = new mongoose.Schema({
-    userName: { type: String, required: true }
+
+
+/* Create userName Model */
+let exerciceSessionSchema = new mongoose.Schema({
+    description: { type: String, required: true },
+    duration: { type: Number, required: true },
+    date: String
 });
 
-let Username = mongoose.model('Username', userNameSchema);
+let Session = mongoose.model('Session', exerciceSessionSchema);
 
+/* Create userName Model */
+let userSchema = new mongoose.Schema({
+    username: { type: String, required: true },
+    log: [exerciceSessionSchema]
+});
+
+let User = mongoose.model('User', userSchema);
+
+
+//Create new users
 app.post('/api/users', function(req, res) {
-    let userName = req.body.username;
-    if (userName == undefined || userName.length == 0) {
-        return res.send('Path `username` is required.')
-    }
-    console.log('username:' + userName)
-    res.send({ 'username': userName });
+    let newUser = new User({ username: req.body.username });
+    newUser.save((error, savedUser) => {
+        if (!error) {
+            let responseObject = {};
+            responseObject['username'] = savedUser.username;
+            responseObject['id'] = savedUser.id;
+            res.json(responseObject);
+        }
+    })
+
 });
 
+//Get -> List of Users
+app.get('/api/users', function(req, res) {
+
+    User.find({}, (error, arrayOfUsers) => {
+        if (!error) {
+            res.json(arrayOfUsers)
+        } else {
+            console.log(error);
+        }
+    })
+});
+
+//Add an exercice for a particular ID
+app.post('/api/users/:_id/exercises', (req, res) => {
+    let id = req.params._id;
+    console.log('the id:' + id)
+    let newSession = new Session({
+        description: req.body.description,
+        duration: parseInt(req.body.duration),
+        date: req.body.date
+    });
+    if (newSession.date === '') {
+        newSession.date = new Date().toISOString().substring(0, 10);
+    }
+    console.log(newSession)
+    User.findByIdAndUpdate(
+        req.params._id, {
+            $push: { log: newSession }
+        }, { new: true }, (error, updatedUser) => {
+            if (!error) {
+                console.log('user: ' + updatedUser)
+                let responseObject = {};
+                responseObject['_id'] = updatedUser._id;
+                responseObject['username'] = updatedUser.username;
+                responseObject['date'] = new Date(newSession.date).toUTCString();
+                responseObject['description'] = newSession.description;
+                responseObject['duration'] = newSession.duration;
+                res.json(responseObject);
+            } else { console.log('HERE' + error) }
+        }
+
+    );
+});
 
 
 
