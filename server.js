@@ -114,7 +114,7 @@ app.get('/api/users/:_id/logs', (req, res) => {
     let id = req.params._id;
     User.findById(id, (error, result) => {
         if (!error) {
-            let responseObject = result;
+            let responseObject = {...result._doc };
             console.log('result' + result);
 
 
@@ -139,10 +139,12 @@ app.get('/api/users/:_id/logs', (req, res) => {
             if (req.query.limit) {
                 responseObject.log = responseObject.log.slice(0, req.query.limit);
             }
-
-            responseObject['count'] = result.log.length;
+            let count = result.log.length;
+            console.log(count);
+            responseObject["count"] = count;
             console.log('Obj' + responseObject)
             res.json(responseObject);
+            console.log('End of endpoint')
         } else { console.log(error) }
     })
 });
