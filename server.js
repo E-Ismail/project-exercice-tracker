@@ -112,9 +112,37 @@ app.post('/api/users/:_id/exercises', (req, res) => {
 //List of logs for a user
 app.get('/api/users/:_id/logs', (req, res) => {
     let id = req.params._id;
-    User.findById(id, (error, foundUser) => {
+    User.findById(id, (error, result) => {
         if (!error) {
-            res.json(foundUser);
+            let responseObject = result;
+            console.log('result' + result);
+
+
+            if (req.query.from || req.query.to) {
+                let fromDate = new Date(0);
+                let toDate = new Date();
+                if (req.query.from) {
+                    fromDate = new Date(req.query.from)
+                }
+                if (req.query.to) {
+                    toDate = new Date(req.query.to)
+                }
+                fromDate = fromDate.getTime();
+                toDate = toDate.getTime();
+
+                responseObject.log = responseObject.log.filter((session) => {
+                    let sessionDate = new Date(session.date).getTime();
+                    return sessionDate >= fromDate && sessionDate <= toDate;
+                })
+            }
+
+            if (req.query.limit) {
+                responseObject.log = responseObject.log.slice(0, req.query.limit);
+            }
+
+            responseObject['count'] = result.log.length;
+            console.log('Obj' + responseObject)
+            res.json(responseObject);
         } else { console.log(error) }
     })
 });
