@@ -99,7 +99,7 @@ app.post('/api/users/:_id/exercises', (req, res) => {
                 let responseObject = {};
                 responseObject['_id'] = updatedUser._id;
                 responseObject['username'] = updatedUser.username;
-                responseObject['date'] = new Date(newSession.date).toUTCString();
+                responseObject['date'] = new Date(newSession.date).toDateString();
                 responseObject['description'] = newSession.description;
                 responseObject['duration'] = newSession.duration;
                 res.json(responseObject);
