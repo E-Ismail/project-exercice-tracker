@@ -109,6 +109,15 @@ app.post('/api/users/:_id/exercises', (req, res) => {
     );
 });
 
+//List of logs for a user
+app.get('/api/users/:_id/logs', (req, res) => {
+    let id = req.params._id;
+    User.findById(id, (error, foundUser) => {
+        if (!error) {
+            res.json(foundUser);
+        } else { console.log(error) }
+    })
+});
 
 
 
